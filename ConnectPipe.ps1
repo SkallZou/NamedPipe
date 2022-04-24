@@ -34,7 +34,7 @@ Invoke-Expression -Command $auth
 
 $pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream($pipeServer, $pipeName)
 Write-Host "Attempting to connect to the pipe..."
-$pipeClient.Connect();
+$pipeClient.Connect(60000);
 Write-Host "Connected."
 $sw = New-Object System.IO.StreamWriter($pipeClient)
 $sr = New-Object System.IO.StreamReader($pipeClient)
