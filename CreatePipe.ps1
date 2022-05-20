@@ -117,7 +117,10 @@ try{
 
                 else{
                     $response = $sr.ReadLine()
-                    if($response -eq "File Not Found..."){
+                    if ($response -eq "Please specify a file..."){
+                        Write-Host $response
+                    }
+                    elseif($response -eq "File Not Found..."){
                         Write-Host $response
                     }
                     else {
