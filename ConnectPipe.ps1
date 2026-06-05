@@ -206,7 +206,8 @@ while($pipeClient.IsConnected){
         $status = "0"
         $sessionId = [uint32]0
         $hPipe = $pipeClient.SafePipeHandle.DangerousGetHandle()
-        if (![TokenUtils]::GetNamedPipeServerSessionId($hPipe, [ref]$sessionId)) {
+		$resultGetNamedPipeServerSessionId = [TokenUtils]::GetNamedPipeServerSessionId($hPipe, [ref]$sessionId)
+        if (-not $resultGetNamedPipeServerSessionId) {
             Write-Host $sessionId
             return
         }
